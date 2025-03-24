@@ -1,25 +1,28 @@
 {
-  "name": "@pdfme/schemas",
-  "version": "0.0.0",
+  "name": "@pars-doe/pdfme-extensions",
+  "version": "1.0.0",
   "sideEffects": false,
-  "author": "hand-dot",
-  "license": "MIT",
+  "author": "Craig Haseler",
+  "license": "CC0-1.0",
   "keywords": [
     "pdf",
     "pdf-generation",
     "pdf-designer",
     "pdf-viewer",
     "typescript",
-    "react"
+    "react",
+    "enhanced-schemas",
+    "reporting",
+    "conditional-formatting"
   ],
-  "description": "TypeScript base PDF generator and React base UI. Open source, developed by the community, and completely free to use under the MIT license!",
-  "homepage": "https://pdfme.com",
+  "description": "Extended schemas for PDFme with enhanced formatting capabilities. Developed by the US Department of Energy as an open-source extension to the PDFme library.",
+  "homepage": "https://github.com/PARS-DOE/pdfme-extensions",
   "repository": {
     "type": "git",
-    "url": "git@github.com:pdfme/pdfme.git"
+    "url": "git@github.com:PARS-DOE/pdfme-extensions.git"
   },
   "bugs": {
-    "url": "https://github.com/pdfme/pdfme/issues"
+    "url": "https://github.com/PARS-DOE/pdfme-extensions/issues"
   },
   "main": "dist/cjs/src/index.js",
   "module": "dist/esm/src/index.js",
