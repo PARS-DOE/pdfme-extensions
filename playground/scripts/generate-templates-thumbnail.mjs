@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import pLimit from 'p-limit';
+import { fileURLToPath } from 'url';
 import { generate } from '@pdfme/generator/cjs/src/index.js';
 import { pdf2img } from '@pdfme/converter/cjs/src/index.node.js';
 import { getInputFromTemplate, getDefaultFont } from '@pdfme/common/cjs/src/index.js';
@@ -23,7 +24,8 @@ import {
   radioGroup,
 } from '@pdfme/schemas/cjs/src/index.js';
 
-const __dirname = path.dirname(new URL(import.meta.url).pathname);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const plugins = {
   multiVariableText,
@@ -103,7 +105,7 @@ async function createThumbnailFromTemplate(templatePath, thumbnailPath) {
 
 async function main() {
   const playgroundPath = path.resolve(__dirname, '..');
-  const templatesPath = path.join(playgroundPath, 'public', 'template-assets');
+  const templatesPath = path.resolve(playgroundPath, 'public', 'template-assets');
 
   const hashMapPath = path.join(__dirname, 'thumbnail-hash-map.json');
   let hashMap = {};

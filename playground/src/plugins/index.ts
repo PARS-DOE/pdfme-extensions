@@ -14,6 +14,8 @@ import {
   select,
   checkbox,
   radioGroup,
+  progressBar,
+  textThreshold,
 } from '@pdfme/schemas';
 import { signature } from './signature';
 
@@ -28,6 +30,8 @@ export const getPlugins = () => {
     Image: image,
     SVG: svg,
     Signature: signature,
+    ProgressBar: progressBar,
+    'Text Threshold': textThreshold,
     QR: barcodes.qrcode,
     DateTime: dateTime,
     Date: date,

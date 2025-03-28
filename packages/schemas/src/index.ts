@@ -12,6 +12,8 @@ import time from './date/time.js';
 import select from './select/index.js';
 import radioGroup from './radioGroup/index.js';
 import checkbox from './checkbox/index.js';
+import progressBar from './progressBar/index.js';
+import textThreshold from './textThreshold/index.js';
 
 const builtInPlugins = { Text: text };
 
@@ -33,6 +35,8 @@ export {
   select,
   radioGroup,
   checkbox,
+  progressBar,
+  textThreshold,
 };
 
 // Export utility functions
