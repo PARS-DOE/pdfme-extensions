@@ -19,6 +19,7 @@ import {
   getFontKitFont,
   getBrowserVerticalFontAdjustments,
   isFirefox,
+  isAboveThreshold,
 } from './helper.js';
 import { isEditable } from '../utils.js';
 
@@ -59,6 +60,7 @@ const replaceUnsupportedChars = (text: string, fontKitFont: FontKitFont): string
 export const uiRender = async (arg: UIRenderProps<TextThresholdSchema>) => {
   const { value, schema, mode, onChange, stopEditing, tabIndex, placeholder, options, _cache } =
     arg;
+  console.log('uiRender options:', options);
   const usePlaceholder = isEditable(mode, schema) && placeholder && !value;
   const getText = (element: HTMLDivElement) => {
     let text = element.innerText;
@@ -164,7 +166,7 @@ export const buildStyledTextContainer = (
   fontKitFont: FontKitFont,
   value: string,
 ) => {
-  const { schema, rootElement, mode } = arg;
+  const { schema, rootElement, mode, options } = arg;
 
   let dynamicFontSize: undefined | number = undefined;
 
@@ -191,10 +193,14 @@ export const buildStyledTextContainer = (
 
   const container = document.createElement('div');
 
+  // Get variables from options if available
+  const inputs = options?.inputs as Array<Record<string, string>> | undefined;
+  const variables = inputs && inputs.length > 0 ? inputs[0] : undefined;
+
   const containerStyle: CSS.Properties = {
     padding: 0,
     resize: 'none',
-    backgroundColor: getBackgroundColor(value, schema),
+    backgroundColor: getBackgroundColor(value, schema, variables),
     border: 'none',
     display: 'flex',
     flexDirection: 'column',
@@ -282,17 +288,33 @@ export const mapVerticalAlignToFlex = (verticalAlignmentValue: string | undefine
   return 'flex-start';
 };
 
-const getBackgroundColor = (value: string, schema: { 
-  backgroundColor?: string, 
-  threshold?: number, 
-  thresholdBackgroundColor?: string 
-}) => {
+const getBackgroundColor = (
+  value: string, 
+  schema: { 
+    backgroundColor?: string, 
+    threshold?: number, 
+    thresholdBackgroundColor?: string,
+    thresholdField?: string
+  },
+  variables?: Record<string, string>
+) => {
+  console.log('getBackgroundColor called with:', { value, schema, variables });
+  
   if (!value) return 'transparent';
   
-  // Check if value is below threshold (if threshold is defined)
+  // Check threshold condition using the helper function
   if (schema.threshold !== undefined && schema.thresholdBackgroundColor) {
-    const numericValue = parseFloat(value);
-    if (!isNaN(numericValue) && numericValue < schema.threshold) {
+    const isAboveThresholdValue = isAboveThreshold(
+      value, 
+      schema.threshold, 
+      variables, 
+      schema.thresholdField
+    );
+    
+    console.log('isAboveThresholdValue:', isAboveThresholdValue);
+    
+    // If the value is below threshold, apply the threshold background color
+    if (!isAboveThresholdValue) {
       return schema.thresholdBackgroundColor;
     }
   }

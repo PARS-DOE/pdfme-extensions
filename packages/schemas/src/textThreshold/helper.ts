@@ -25,6 +25,63 @@ import {
   LINE_START_FORBIDDEN_CHARS,
 } from './constants.js';
 
+// Check if value is above threshold
+export const isAboveThreshold = (
+  value: string, 
+  threshold: number, 
+  variables?: Record<string, string>,
+  thresholdField?: string
+): boolean => {
+  // If no thresholdField is provided, use the current field's value
+  if (!thresholdField || !variables) {
+    const numericValue = parseFloat(value);
+    return !isNaN(numericValue) && numericValue > threshold;
+  }
+  
+  // Try to find the field value by direct lookup
+  let fieldValue = variables[thresholdField];
+  
+  // If not found by direct lookup, try to find it by iterating through variables
+  if (fieldValue === undefined) {
+    // Try different variations of the field name
+    const possibleKeys = [
+      thresholdField,                   // Exact match
+      `field_${thresholdField}`,        // field_name format
+      `${thresholdField}_field`,        // name_field format
+      thresholdField.toLowerCase(),     // lowercase
+      thresholdField.toUpperCase(),     // uppercase
+    ];
+    
+    // Check all possible keys
+    for (const key of possibleKeys) {
+      if (variables[key] !== undefined) {
+        fieldValue = variables[key];
+        break;
+      }
+    }
+    
+    // If still not found, check if any key ends with the thresholdField
+    if (fieldValue === undefined) {
+      for (const [key, val] of Object.entries(variables)) {
+        if (key.endsWith(`_${thresholdField}`)) {
+          fieldValue = val;
+          break;
+        }
+      }
+    }
+  }
+  
+  // If we found a field value, use it for comparison
+  if (fieldValue !== undefined) {
+    const numericValue = parseFloat(fieldValue);
+    return !isNaN(numericValue) && numericValue > threshold;
+  }
+  
+  // Otherwise, fall back to using the current field's value
+  const numericValue = parseFloat(value);
+  return !isNaN(numericValue) && numericValue > threshold;
+};
+
 export const getBrowserVerticalFontAdjustments = (
   fontKitFont: FontKitFont,
   fontSize: number,

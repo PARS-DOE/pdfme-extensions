@@ -25,6 +25,7 @@ type RendererProps = Omit<
   onChangeHoveringSchemaId?: (id: string | null) => void;
   scale: number;
   selectable?: boolean;
+  allFieldValues?: Record<string, string>;
 };
 
 type ReRenderCheckProps = {
@@ -133,6 +134,15 @@ const Renderer = (props: RendererProps) => {
     ref.current.innerHTML = '';
     const render = plugin.ui;
 
+    // Get all field values from the parent component's context
+    const allFieldValues = props.allFieldValues || {};
+
+    // Create a copy of options with inputs
+    const optionsWithInputs = {
+      ...options,
+      inputs: [allFieldValues]
+    };
+
     void render({
       value,
       schema,
@@ -143,7 +153,7 @@ const Renderer = (props: RendererProps) => {
       stopEditing,
       tabIndex,
       placeholder,
-      options,
+      options: optionsWithInputs,
       theme,
       i18n,
       _cache,
@@ -154,7 +164,7 @@ const Renderer = (props: RendererProps) => {
         ref.current.innerHTML = '';
       }
     };
-  }, [plugin?.ui, schema.type, reRenderDependencies]);
+  }, [plugin?.ui, schema.type, reRenderDependencies, props.allFieldValues]);
 
   if (!plugin || !plugin.ui) {
     console.error(`[@pdfme/ui] Renderer for type ${schema.type} not found. 

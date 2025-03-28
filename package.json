@@ -74,5 +74,8 @@
     "ts-loader": "^9.2.5",
     "ts-prune": "^0.10.3",
     "typescript": "^5.8.2"
+  },
+  "dependencies": {
+    "build": "^0.1.4"
   }
 }

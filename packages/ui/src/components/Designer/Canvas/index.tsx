@@ -490,19 +490,20 @@ const Canvas = (props: Props, ref: Ref<HTMLDivElement>) => {
           const content = schema.content || '';
           let value = content;
 
-          if (mode !== 'designer' && schema.readOnly) {
-            const variables = {
-              ...schemasList.flat().reduce(
-                (acc, currSchema) => {
-                  acc[currSchema.name] = currSchema.content || '';
-                  return acc;
-                },
-                {} as Record<string, string>,
-              ),
-              totalPages: schemasList.length,
-              currentPage: index + 1,
-            };
+          // Create variables object for all fields, not just read-only ones
+          const variables = {
+            ...schemasList.flat().reduce(
+              (acc, currSchema) => {
+                acc[currSchema.name] = currSchema.content || '';
+                return acc;
+              },
+              {} as Record<string, string>,
+            ),
+            totalPages: String(schemasList.length),
+            currentPage: String(index + 1),
+          };
 
+          if (mode !== 'designer' && schema.readOnly) {
             value = replacePlaceholders({ content, variables, schemas: schemasList });
           }
 
@@ -527,6 +528,7 @@ const Canvas = (props: Props, ref: Ref<HTMLDivElement>) => {
                   : token.colorPrimary
               }`}
               scale={scale}
+              allFieldValues={variables}
             />
           );
         }}

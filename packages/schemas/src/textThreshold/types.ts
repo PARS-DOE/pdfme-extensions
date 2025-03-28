@@ -30,4 +30,5 @@ export interface TextThresholdSchema extends Schema {
   backgroundColor: string;
   threshold?: number;                   // Minimum value threshold
   thresholdBackgroundColor?: string;    // Background color when below threshold
+  thresholdField?: string;              // Field name to compare against threshold (if not provided, uses this field's value)
 }

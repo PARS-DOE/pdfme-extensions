@@ -176,6 +176,13 @@ export const propPanel: PropPanel<TextThresholdSchema> = {
           },
         ],
       },
+      thresholdField: {
+        title: 'Threshold Field',
+        type: 'string',
+        widget: 'input',
+        span: 12,
+        description: 'If provided, compares this field\'s value against the threshold instead of the current field\'s value',
+      },
     };
 
     return textSchema;
@@ -205,5 +212,6 @@ export const propPanel: PropPanel<TextThresholdSchema> = {
     underline: false,
     threshold: DEFAULT_THRESHOLD,
     thresholdBackgroundColor: DEFAULT_THRESHOLD_BACKGROUND_COLOR,
+    thresholdField: undefined,
   },
 };

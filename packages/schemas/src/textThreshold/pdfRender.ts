@@ -27,6 +27,7 @@ import {
   getFontKitFont,
   widthOfTextAtSize,
   splitTextToSize,
+  isAboveThreshold,
 } from './helper.js';
 import { convertForPdfLayoutProps, rotatePoint, hex2PrintingColor } from '../utils.js';
 
@@ -119,15 +120,26 @@ export const pdfRender = async (arg: PDFRenderProps<TextThresholdSchema>) => {
     opacity,
   } = convertForPdfLayoutProps({ schema, pageHeight, applyRotateTranslate: false });
 
+  // Get variables from options if available
+  const inputs = options?.inputs as Array<Record<string, string>> | undefined;
+  const variables = inputs && inputs.length > 0 ? inputs[0] : undefined;
+  
   // Determine background color based on threshold
   let bgColor = schema.backgroundColor;
   
-  // Check if value is below threshold
-  if (schema.threshold !== undefined && 
-      schema.thresholdBackgroundColor && 
-      !isNaN(parseFloat(value)) && 
-      parseFloat(value) < schema.threshold) {
-    bgColor = schema.thresholdBackgroundColor;
+  // Check threshold condition using the helper function
+  if (schema.threshold !== undefined && schema.thresholdBackgroundColor) {
+    const isAboveThresholdValue = isAboveThreshold(
+      value, 
+      schema.threshold, 
+      variables, 
+      schema.thresholdField
+    );
+    
+    // If the value is below threshold, apply the threshold background color
+    if (!isAboveThresholdValue) {
+      bgColor = schema.thresholdBackgroundColor;
+    }
   }
   
   // Draw background if a color is specified
