@@ -14,6 +14,7 @@ import radioGroup from './radioGroup/index.js';
 import checkbox from './checkbox/index.js';
 import progressBar from './progressBar/index.js';
 import textThreshold from './textThreshold/index.js';
+import numOfBcps from './numOfBcps/index.js';
 
 const builtInPlugins = { Text: text };
 
@@ -37,6 +38,7 @@ export {
   checkbox,
   progressBar,
   textThreshold,
+  numOfBcps,
 };
 
 // Export utility functions

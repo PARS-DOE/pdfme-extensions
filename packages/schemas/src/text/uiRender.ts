@@ -195,7 +195,7 @@ export const buildStyledTextContainer = (
     padding: 0,
     resize: 'none',
     backgroundColor: getBackgroundColor(value, schema),
-    border: 'none',
+    border: '2px solid #000000',
     display: 'flex',
     flexDirection: 'column',
     justifyContent: mapVerticalAlignToFlex(schema.verticalAlignment),

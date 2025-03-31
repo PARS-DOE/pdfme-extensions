@@ -1,6 +1,6 @@
 import { PDFFont, PDFDocument } from '@pdfme/pdf-lib';
 import type { Font as FontKitFont } from 'fontkit';
-import type { TextThresholdSchema } from './types.js';
+import type { NumOfBcpsSchema } from './types.js';
 import {
   PDFRenderProps,
   ColorType,
@@ -19,6 +19,8 @@ import {
   DEFAULT_LINE_HEIGHT,
   DEFAULT_CHARACTER_SPACING,
   DEFAULT_FONT_COLOR,
+  BCP_POSITIVE_BACKGROUND_COLOR,
+  BCP_NEGATIVE_BACKGROUND_COLOR,
 } from './constants.js';
 import {
   calculateDynamicFontSize,
@@ -27,7 +29,8 @@ import {
   getFontKitFont,
   widthOfTextAtSize,
   splitTextToSize,
-  isAboveThreshold,
+  checkBcps,
+  formatBcpText,
 } from './helper.js';
 import { convertForPdfLayoutProps, rotatePoint, hex2PrintingColor } from '../utils.js';
 
@@ -71,7 +74,7 @@ const getFontProp = ({
   value: string;
   fontKitFont: FontKitFont;
   colorType?: ColorType;
-  schema: TextThresholdSchema;
+  schema: NumOfBcpsSchema;
 }) => {
   const fontSize = schema.dynamicFontSize
     ? calculateDynamicFontSize({ textSchema: schema, fontKitFont, value })
@@ -88,9 +91,8 @@ const getFontProp = ({
   };
 };
 
-export const pdfRender = async (arg: PDFRenderProps<TextThresholdSchema>) => {
-  const { value, pdfDoc, pdfLib, page, options, schema, _cache } = arg;
-  if (!value) return;
+export const pdfRender = async (arg: PDFRenderProps<NumOfBcpsSchema>) => {
+  const { pdfDoc, pdfLib, page, options, schema, _cache } = arg;
 
   const { font = getDefaultFont(), colorType } = options;
 
@@ -102,7 +104,19 @@ export const pdfRender = async (arg: PDFRenderProps<TextThresholdSchema>) => {
     }),
     getFontKitFont(schema.fontName, font, _cache as Map<string, FontKitFont>),
   ]);
-  const fontProp = getFontProp({ value, fontKitFont, schema, colorType });
+
+  // Get variables from options if available
+  const inputs = options?.inputs as Array<Record<string, string>> | undefined;
+  const variables = inputs && inputs.length > 0 ? inputs[0] : undefined;
+  
+  // Format the display text based on BCP count
+  const displayText = formatBcpText(variables, schema.bcpField);
+  
+  // Determine background color based on BCP count
+  const { hasBcps } = checkBcps(variables, schema.bcpField);
+  const bgColor = hasBcps ? BCP_POSITIVE_BACKGROUND_COLOR : BCP_NEGATIVE_BACKGROUND_COLOR;
+  
+  const fontProp = getFontProp({ value: displayText, fontKitFont, schema, colorType });
 
   const { fontSize, color, alignment, verticalAlignment, lineHeight, characterSpacing } = fontProp;
 
@@ -119,37 +133,13 @@ export const pdfRender = async (arg: PDFRenderProps<TextThresholdSchema>) => {
     position: { x, y },
     opacity,
   } = convertForPdfLayoutProps({ schema, pageHeight, applyRotateTranslate: false });
-
-  // Get variables from options if available
-  const inputs = options?.inputs as Array<Record<string, string>> | undefined;
-  const variables = inputs && inputs.length > 0 ? inputs[0] : undefined;
-  
-  // Determine background color based on threshold
-  let bgColor = schema.backgroundColor;
-  
-  // Check threshold condition using the helper function
-  if (schema.threshold !== undefined && schema.thresholdBackgroundColor) {
-    const isAboveThresholdValue = isAboveThreshold(
-      value, 
-      schema.threshold, 
-      variables, 
-      schema.thresholdField
-    );
-    
-    // If the value is below threshold, apply the threshold background color
-    if (!isAboveThresholdValue) {
-      bgColor = schema.thresholdBackgroundColor;
-    }
-  }
   
   // Calculate pivot point for rotations
   const pivotPoint = { x: x + width / 2, y: pageHeight - mm2pt(schema.position.y) - height / 2 };
   
-  // Draw background if a color is specified
-  if (bgColor) {
-    const color = hex2PrintingColor(bgColor, colorType);
-    page.drawRectangle({ x, y, width, height, rotate, color });
-  }
+  // Draw background
+  const backgroundColor = hex2PrintingColor(bgColor, colorType);
+  page.drawRectangle({ x, y, width, height, rotate, color: backgroundColor });
   
   // Draw black border
   const borderColor = hex2PrintingColor('#000000', colorType);
@@ -191,7 +181,7 @@ export const pdfRender = async (arg: PDFRenderProps<TextThresholdSchema>) => {
   const halfLineHeightAdjustment = lineHeight === 0 ? 0 : ((lineHeight - 1) * fontSize) / 2;
 
   const lines = splitTextToSize({
-    value,
+    value: displayText,
     characterSpacing,
     fontSize,
     fontKitFont,

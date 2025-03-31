@@ -1,7 +1,7 @@
 import type * as CSS from 'csstype';
 import type { Font as FontKitFont } from 'fontkit';
 import { UIRenderProps, getDefaultFont } from '@pdfme/common';
-import type { TextThresholdSchema } from './types.js';
+import type { NumOfBcpsSchema } from './types.js';
 import {
   DEFAULT_FONT_SIZE,
   DEFAULT_ALIGNMENT,
@@ -13,13 +13,16 @@ import {
   DEFAULT_CHARACTER_SPACING,
   DEFAULT_FONT_COLOR,
   PLACEHOLDER_FONT_COLOR,
+  BCP_POSITIVE_BACKGROUND_COLOR,
+  BCP_NEGATIVE_BACKGROUND_COLOR,
 } from './constants.js';
 import {
   calculateDynamicFontSize,
   getFontKitFont,
   getBrowserVerticalFontAdjustments,
   isFirefox,
-  isAboveThreshold,
+  checkBcps,
+  formatBcpText,
 } from './helper.js';
 import { isEditable } from '../utils.js';
 
@@ -57,32 +60,35 @@ const replaceUnsupportedChars = (text: string, fontKitFont: FontKitFont): string
     .join('');
 };
 
-export const uiRender = async (arg: UIRenderProps<TextThresholdSchema>) => {
-  const { value, schema, mode, onChange, stopEditing, tabIndex, placeholder, options, _cache } =
-    arg;
-  console.log('uiRender options:', options);
-  const usePlaceholder = isEditable(mode, schema) && placeholder && !value;
-  const getText = (element: HTMLDivElement) => {
-    let text = element.innerText;
-    if (text.endsWith('\n')) {
-      // contenteditable adds additional newline char retrieved with innerText
-      text = text.slice(0, -1);
-    }
-    return text;
-  };
+export const uiRender = async (arg: UIRenderProps<NumOfBcpsSchema>) => {
+  const { schema, mode, tabIndex, options, _cache } = arg;
+  
   const font = options?.font || getDefaultFont();
   const fontKitFont = await getFontKitFont(
     schema.fontName,
     font,
     _cache as Map<string, import('fontkit').Font>,
   );
+  
+  // Get variables from options if available
+  const inputs = options?.inputs as Array<Record<string, string>> | undefined;
+  const variables = inputs && inputs.length > 0 ? inputs[0] : undefined;
+  
+  // Format the display text based on BCP count
+  const displayText = formatBcpText(variables, schema.bcpField);
+  
+  // Determine background color based on BCP count
+  const { hasBcps } = checkBcps(variables, schema.bcpField);
+  const bgColor = hasBcps ? BCP_POSITIVE_BACKGROUND_COLOR : BCP_NEGATIVE_BACKGROUND_COLOR;
+  
   const textBlock = buildStyledTextContainer(
     arg,
     fontKitFont,
-    usePlaceholder ? placeholder : value,
+    displayText,
+    bgColor,
   );
 
-  const processedText = replaceUnsupportedChars(value, fontKitFont);
+  const processedText = replaceUnsupportedChars(displayText, fontKitFont);
 
   if (!isEditable(mode, schema)) {
     // Read-only mode
@@ -91,7 +97,7 @@ export const uiRender = async (arg: UIRenderProps<TextThresholdSchema>) => {
       .map(
         (l, i) =>
           `<span style="letter-spacing:${
-            String(value).length === i + 1 ? 0 : 'inherit'
+            processedText.length === i + 1 ? 0 : 'inherit'
           };">${l}</span>`,
       )
       .join('');
@@ -100,11 +106,7 @@ export const uiRender = async (arg: UIRenderProps<TextThresholdSchema>) => {
 
   makeElementPlainTextContentEditable(textBlock);
   textBlock.tabIndex = tabIndex || 0;
-  textBlock.innerText = mode === 'designer' ? value : processedText;
-  textBlock.addEventListener('blur', (e: Event) => {
-    if (onChange) onChange({ key: 'content', value: getText(e.target as HTMLDivElement) });
-    if (stopEditing) stopEditing();
-  });
+  textBlock.innerText = mode === 'designer' ? displayText : processedText;
 
   if (schema.dynamicFontSize) {
     let dynamicFontSize: undefined | number = undefined;
@@ -117,7 +119,7 @@ export const uiRender = async (arg: UIRenderProps<TextThresholdSchema>) => {
           dynamicFontSize = calculateDynamicFontSize({
             textSchema: schema,
             fontKitFont,
-            value: getText(textBlock),
+            value: textBlock.textContent,
             startingFontSize: dynamicFontSize,
           });
           textBlock.style.fontSize = `${dynamicFontSize}pt`;
@@ -132,16 +134,6 @@ export const uiRender = async (arg: UIRenderProps<TextThresholdSchema>) => {
           textBlock.style.marginBottom = `${newBottomAdj}px`;
         })();
       }, 0);
-    });
-  }
-
-  if (usePlaceholder) {
-    textBlock.style.color = PLACEHOLDER_FONT_COLOR;
-    textBlock.addEventListener('focus', () => {
-      if (textBlock.innerText === placeholder) {
-        textBlock.innerText = '';
-        textBlock.style.color = schema.fontColor ?? DEFAULT_FONT_COLOR;
-      }
     });
   }
 
@@ -162,11 +154,12 @@ export const uiRender = async (arg: UIRenderProps<TextThresholdSchema>) => {
 };
 
 export const buildStyledTextContainer = (
-  arg: UIRenderProps<TextThresholdSchema>,
+  arg: UIRenderProps<NumOfBcpsSchema>,
   fontKitFont: FontKitFont,
   value: string,
+  backgroundColor: string,
 ) => {
-  const { schema, rootElement, mode, options } = arg;
+  const { schema, rootElement, mode } = arg;
 
   let dynamicFontSize: undefined | number = undefined;
 
@@ -193,14 +186,10 @@ export const buildStyledTextContainer = (
 
   const container = document.createElement('div');
 
-  // Get variables from options if available
-  const inputs = options?.inputs as Array<Record<string, string>> | undefined;
-  const variables = inputs && inputs.length > 0 ? inputs[0] : undefined;
-
   const containerStyle: CSS.Properties = {
     padding: 0,
     resize: 'none',
-    backgroundColor: getBackgroundColor(value, schema, variables),
+    backgroundColor: backgroundColor,
     border: '2px solid #000000',
     display: 'flex',
     flexDirection: 'column',
@@ -286,38 +275,4 @@ export const mapVerticalAlignToFlex = (verticalAlignmentValue: string | undefine
       return 'flex-end';
   }
   return 'flex-start';
-};
-
-const getBackgroundColor = (
-  value: string, 
-  schema: { 
-    backgroundColor?: string, 
-    threshold?: number, 
-    thresholdBackgroundColor?: string,
-    thresholdField?: string
-  },
-  variables?: Record<string, string>
-) => {
-  console.log('getBackgroundColor called with:', { value, schema, variables });
-  
-  if (!value) return 'transparent';
-  
-  // Check threshold condition using the helper function
-  if (schema.threshold !== undefined && schema.thresholdBackgroundColor) {
-    const isAboveThresholdValue = isAboveThreshold(
-      value, 
-      schema.threshold, 
-      variables, 
-      schema.thresholdField
-    );
-    
-    console.log('isAboveThresholdValue:', isAboveThresholdValue);
-    
-    // If the value is below threshold, apply the threshold background color
-    if (!isAboveThresholdValue) {
-      return schema.thresholdBackgroundColor;
-    }
-  }
-  
-  return schema.backgroundColor || 'transparent';
 };

@@ -119,10 +119,49 @@ export const pdfRender = async (arg: PDFRenderProps<TextSchema>) => {
     opacity,
   } = convertForPdfLayoutProps({ schema, pageHeight, applyRotateTranslate: false });
 
+  // Calculate pivot point for rotations
+  const pivotPoint = { x: x + width / 2, y: pageHeight - mm2pt(schema.position.y) - height / 2 };
+  
+  // Draw background if specified
   if (schema.backgroundColor) {
     const color = hex2PrintingColor(schema.backgroundColor, colorType);
     page.drawRectangle({ x, y, width, height, rotate, color });
   }
+  
+  // Draw black border
+  const borderColor = hex2PrintingColor('#000000', colorType);
+  // Top border
+  page.drawLine({
+    start: rotatePoint({ x, y }, pivotPoint, rotate.angle),
+    end: rotatePoint({ x: x + width, y }, pivotPoint, rotate.angle),
+    thickness: 2,
+    color: borderColor,
+    opacity,
+  });
+  // Right border
+  page.drawLine({
+    start: rotatePoint({ x: x + width, y }, pivotPoint, rotate.angle),
+    end: rotatePoint({ x: x + width, y: y + height }, pivotPoint, rotate.angle),
+    thickness: 2,
+    color: borderColor,
+    opacity,
+  });
+  // Bottom border
+  page.drawLine({
+    start: rotatePoint({ x: x + width, y: y + height }, pivotPoint, rotate.angle),
+    end: rotatePoint({ x, y: y + height }, pivotPoint, rotate.angle),
+    thickness: 2,
+    color: borderColor,
+    opacity,
+  });
+  // Left border
+  page.drawLine({
+    start: rotatePoint({ x, y: y + height }, pivotPoint, rotate.angle),
+    end: rotatePoint({ x, y }, pivotPoint, rotate.angle),
+    thickness: 2,
+    color: borderColor,
+    opacity,
+  });
 
   const firstLineTextHeight = heightOfFontAtSize(fontKitFont, fontSize);
   const descent = getFontDescentInPt(fontKitFont, fontSize);
@@ -151,7 +190,6 @@ export const pdfRender = async (arg: PDFRenderProps<TextSchema>) => {
     }
   }
 
-  const pivotPoint = { x: x + width / 2, y: pageHeight - mm2pt(schema.position.y) - height / 2 };
   const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
 
   lines.forEach((line, rowIndex) => {

@@ -16,6 +16,7 @@ import {
   radioGroup,
   progressBar,
   textThreshold,
+  numOfBcps,
 } from '@pdfme/schemas';
 import { signature } from './signature';
 
@@ -32,6 +33,7 @@ export const getPlugins = () => {
     Signature: signature,
     ProgressBar: progressBar,
     'Text Threshold': textThreshold,
+    'Num of BCPs': numOfBcps,
     QR: barcodes.qrcode,
     DateTime: dateTime,
     Date: date,
