@@ -74,11 +74,14 @@ export const uiRender = async (arg: UIRenderProps<NumOfBcpsSchema>) => {
   const inputs = options?.inputs as Array<Record<string, string>> | undefined;
   const variables = inputs && inputs.length > 0 ? inputs[0] : undefined;
   
+  // Get the value from the schema content or default to empty string
+  const value = schema.content || '';
+  
   // Format the display text based on BCP count
-  const displayText = formatBcpText(variables, schema.bcpField);
+  const displayText = formatBcpText(value, variables, schema.bcpField);
   
   // Determine background color based on BCP count
-  const { hasBcps } = checkBcps(variables, schema.bcpField);
+  const { hasBcps } = checkBcps(value, variables, schema.bcpField);
   const bgColor = hasBcps ? BCP_POSITIVE_BACKGROUND_COLOR : BCP_NEGATIVE_BACKGROUND_COLOR;
   
   const textBlock = buildStyledTextContainer(
