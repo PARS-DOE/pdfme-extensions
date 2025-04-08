@@ -142,7 +142,7 @@ export const propPanel: PropPanel<NumOfBcpsSchema> = {
         type: 'string',
         widget: 'input',
         span: 12,
-        description: 'Field name to check for BCP count. If the value is > 0, the background will be red with "BCPs: x" text. Otherwise, it will be green with "No BCPs" text.',
+        description: 'Field name to check for BCP count. You can use {variableName} to reference a variable directly. If empty, uses this field\'s value.',
       },
     };
 

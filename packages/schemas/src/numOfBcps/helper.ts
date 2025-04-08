@@ -27,11 +27,29 @@ import {
 
 // Check if BCP count is greater than 0
 export const checkBcps = (
-  variables?: Record<string, string>,
-  bcpField?: string
+  value: string,                     // The control's own value
+  variables?: Record<string, string>, // All available variables
+  bcpField?: string                  // Field to check for BCP count
 ): { hasBcps: boolean; count: number } => {
+  // If bcpField starts with '{' and ends with '}', it's a direct variable reference
+  if (bcpField && bcpField.startsWith('{') && bcpField.endsWith('}')) {
+    const variableName = bcpField.substring(1, bcpField.length - 1).trim();
+    if (variables && variables[variableName] !== undefined) {
+      const numericValue = parseFloat(variables[variableName]);
+      if (!isNaN(numericValue)) {
+        return { hasBcps: numericValue > 0, count: numericValue };
+      }
+    }
+    return { hasBcps: false, count: 0 }; // Variable not found or not numeric
+  }
+  
+  // If no bcpField is provided, use the control's own value
   if (!bcpField || !variables) {
-    return { hasBcps: false, count: 0 };
+    const numericValue = parseFloat(value);
+    return { 
+      hasBcps: !isNaN(numericValue) && numericValue > 0, 
+      count: isNaN(numericValue) ? 0 : numericValue 
+    };
   }
   
   // Try to find the field value by direct lookup
@@ -75,15 +93,21 @@ export const checkBcps = (
     }
   }
   
-  return { hasBcps: false, count: 0 };
+  // Otherwise, fall back to using the control's own value
+  const numericValue = parseFloat(value);
+  return { 
+    hasBcps: !isNaN(numericValue) && numericValue > 0, 
+    count: isNaN(numericValue) ? 0 : numericValue 
+  };
 };
 
 // Format the display text based on BCP count
 export const formatBcpText = (
+  value: string,                     // The control's own value
   variables?: Record<string, string>,
   bcpField?: string
 ): string => {
-  const { hasBcps, count } = checkBcps(variables, bcpField);
+  const { hasBcps, count } = checkBcps(value, variables, bcpField);
   
   if (hasBcps) {
     return `BCPs: ${count}`;

@@ -181,7 +181,7 @@ export const propPanel: PropPanel<TextThresholdSchema> = {
         type: 'string',
         widget: 'input',
         span: 12,
-        description: 'If provided, compares this field\'s value against the threshold instead of the current field\'s value',
+        description: 'Field name to check against threshold. You can use {variableName} to reference a variable directly. If empty, uses this field\'s value.',
       },
     };
 

@@ -32,6 +32,16 @@ export const isAboveThreshold = (
   variables?: Record<string, string>,
   thresholdField?: string
 ): boolean => {
+  // If thresholdField starts with '{' and ends with '}', it's a direct variable reference
+  if (thresholdField && thresholdField.startsWith('{') && thresholdField.endsWith('}')) {
+    const variableName = thresholdField.substring(1, thresholdField.length - 1).trim();
+    if (variables && variables[variableName] !== undefined) {
+      const numericValue = parseFloat(variables[variableName]);
+      return !isNaN(numericValue) && numericValue > threshold;
+    }
+    return false; // Variable not found
+  }
+  
   // If no thresholdField is provided, use the current field's value
   if (!thresholdField || !variables) {
     const numericValue = parseFloat(value);
