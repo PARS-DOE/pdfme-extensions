@@ -58,7 +58,6 @@
     "prettier": "prettier --write 'src/**/*.ts'"
   },
   "dependencies": {
-    "@pdfme/pdf-lib": "*",
     "air-datepicker": "^3.5.3",
     "bwip-js": "^4.1.1",
     "date-fns": "^4.1.0",
@@ -67,6 +66,7 @@
   },
   "devDependencies": {
     "@pdfme/common": "file:../common",
+    "@pdfme/pdf-lib": "*",
     "@types/bwip-js": "^3.2.1",
     "@types/fontkit": "^2.0.4",
     "@types/pngjs": "^6.0.2",
@@ -74,7 +74,8 @@
     "pngjs": "^7.0.0"
   },
   "peerDependencies": {
-    "@pdfme/common": "latest"
+    "@pdfme/common": "latest",
+    "@pdfme/pdf-lib": "*"
   },
   "jest": {
     "resolver": "ts-jest-resolver",
